@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+*.pot
+*.pyc
+
+# Django
+*.sqlite3
+/db.sqlite3
+/media/
+*.log
+*.pot
+
+# Environment
+.env
+*.env
+
+# Virtual environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Backup files
+*.bak
+*.tmp
+*~
+
+# Static files
+/staticfiles/
