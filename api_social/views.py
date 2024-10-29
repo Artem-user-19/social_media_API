@@ -22,7 +22,7 @@ User = get_user_model()
 class UserViewSet(viewsets.ModelViewSet):
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -42,8 +42,11 @@ class UserFollowersView(APIView):
 
     def get(self, request):
         user = request.user
-        followers = user.followers.all()
-        serializer = UserFollowingListSerializer(followers, many=True)
+        followers = Follow.objects.filter(
+            followed=user
+        ).select_related("follower")
+        follower_users = [follow.follower for follow in followers]
+        serializer = UserFollowingListSerializer(follower_users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -88,6 +91,41 @@ class FollowView(generics.GenericAPIView):
             },
             status=status.HTTP_204_NO_CONTENT
         )
+
+
+class UnfollowUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, user_id):
+        try:
+            user_to_unfollow = User.objects.get(id=user_id)
+            follow_instance = Follow.objects.filter(
+                follower=request.user,
+                followed=user_to_unfollow
+            ).first()
+
+            if follow_instance:
+                follow_instance.delete()
+                return Response(
+                    {
+                        "detail": f"You have unfollowed {user_to_unfollow.username}."
+                    },
+                    status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {
+                        "detail": "You are not following this user."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except User.DoesNotExist:
+            return Response(
+                {
+                    "detail": "User not found."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -157,6 +195,38 @@ class LikeView(APIView):
             return Response(
                 {"message": "You have not liked this post"},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class UnlikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, post_id):
+        try:
+            post = Post.objects.get(id=post_id)
+            like_instance = Like.objects.filter(user=request.user, post=post).first() #
+
+            if like_instance:
+                like_instance.delete()
+                return Response(
+                    {
+                        "detail": f"You have unliked the post with ID {post_id}."
+                    },
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {
+                        "detail": "You have not liked this post."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except Post.DoesNotExist:
+            return Response(
+                {
+                    "detail": "Post not found."
+                }, status=status.HTTP_404_NOT_FOUND
             )
 
 

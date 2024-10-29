@@ -27,7 +27,8 @@ A Django REST API for a social media platform that includes functionality for us
 
 1. **Clone the repository**:
     ```bash
-    git clone https://github.com/your_username/social_media_API.git
+    git clone https://github.com/your-username/social-media-api.git
+    cd social-media-api
     ```
 
 2. **Set up a virtual environment**:
@@ -62,19 +63,15 @@ A Django REST API for a social media platform that includes functionality for us
 ## User and Authentication Endpoints
 
 - **Register a New User**
-   ![Alt](screens/register.png)
+![Alt](screens/mainpage.png)
 
-  - **Endpoint**: POST `http://127.0.0.1:8000/register/`
+  - **Endpoint**: `POST /register/`
   - **Description**: Registers a new user with provided credentials (e.g., username, password, email).
-  - **Registered**
-    ![Alt](screens/registered.png)
   
 - **Obtain Authentication Token**
 ![Alt](screens/token.png)
-  - **Endpoint**: POST `http:/127.0.0.1:8000/token/`
+  - **Endpoint**: `POST /token/`
   - **Description**: Provides an authentication token for the user after verifying username and password.
-  - **Obtained token**
-![Alt](screens/obtained_token.png)
 ## api/ page
 
 ![Alt](screens/api.png)
@@ -82,67 +79,58 @@ A Django REST API for a social media platform that includes functionality for us
 
 ## User-Related Endpoints
 
-*Each endpoint requires authentication via a token provided by the `/token/` endpoint, which should be included in the header of your requests for accessing user-specific resources. For example `http:/127.0.0.1:8000/api/users/?token=<TOKEN>/`, Token, which you received in `http:/127.0.0.1:8000/token/`*
-
 - **List All Users**
-  ![Alt](screens/users.png)
-  - **Endpoint**: GET `http:/127.0.0.1:8000/api/users/`
+![Alt](screens/users.png)
+  - **Endpoint**: `GET /api/users/`
   - **Description**: Retrieves a list of all registered users.
   
-  - **Get List of Followers**
-  ![Alt](screens/followed_users.png)
-    - **Endpoint**: GET `http:/127.0.0.1:8000/api/followers/`
-    - **Description**: Returns a list of users who follow the authenticated user.
+- **Get List of Followers**
+  - **Endpoint**: `GET /api/followers/`
+  - **Description**: Returns a list of users who follow the authenticated user.
 
-  - **Follow a User**
-  ![Alt](screens/follow_one.png)
-    - **Endpoint**: POST `http:/127.0.0.1:8000/api/follow/<user_id>/`
-    - **Description**: Follows the user specified by `user_id`. Requires authentication.
+- **Follow a User**
+  - **Endpoint**: `POST /api/follow/<user_id>/`
+  - **Description**: Follows the user specified by `user_id`. Requires authentication.
   
-  - **Unfollow a User**
-  ![Alt](screens/unfollow.png)
-    - **Endpoint**: POST ` http:/127.0.0.1:8000/api/unfollow/<user_id>/`
-    - **Description**: Unfollows the user specified by `user_id`. Requires authentication.
+- **Unfollow a User**
+  - **Endpoint**: `POST /api/unfollow/<user_id>/`
+  - **Description**: Unfollows the user specified by `user_id`. Requires authentication.
 
 ## Post-Related Endpoints
 
 - **List All Posts**
-  ![Alt](screens/posts.png)
-  - **Endpoint**: GET ` http:/127.0.0.1:8000/api/posts/`
+  - **Endpoint**: `GET /api/posts/`
   - **Description**: Retrieves a list of all posts created by users.
 
 - **Create a New Post**
-  - **Endpoint**: POST ` http:/127.0.0.1:8000/api/posts/`
+  - **Endpoint**: `POST /api/posts/`
   - **Description**: Creates a new post by the authenticated user.
 
-  - **Like a Post**
-  ![Alt](screens/like_post.png)
-  - **Endpoint**: POST ` http:/127.0.0.1:8000/api/posts/<post_id>/like/`
+- **Like a Post**
+  - **Endpoint**: `POST /api/posts/<post_id>/like/`
   - **Description**: Likes the post specified by `post_id` for the authenticated user.
 
-  - **Unlike a Post**
-  ![Alt](screens/unlike_post.png)
-    - **Endpoint**: POST ` http:/127.0.0.1:8000/api/posts/<post_id>/unlike/`
-    - **Description**: Unlikes the post specified by `post_id` for the authenticated user.
+- **Unlike a Post**
+  - **Endpoint**: `POST /api/posts/<post_id>/unlike/`
+  - **Description**: Unlikes the post specified by `post_id` for the authenticated user.
 
 ## Comment-Related Endpoints
 
 - **List All Comments**
-![Alt](screens/comments.png)
-  - **Endpoint**: GET ` http:/127.0.0.1:8000/api/comments/`
+  - **Endpoint**: `GET /api/comments/`
   - **Description**: Retrieves a list of all comments on posts.
 
 - **Create a New Comment**
-  - **Endpoint**: POST ` http:/127.0.0.1:8000/api/comments/`
+  - **Endpoint**: `POST /api/comments/`
   - **Description**: Creates a new comment on a post by the authenticated user.
 
 - **Retrieve, Update, or Delete a Comment**
-![Alt](screens/comments.png)
   - **Endpoint**: 
-    - GET ` http:/127.0.0.1:8000/api/comments/<comment_id>/` - Retrieve a specific comment.
-    - PUT ` http:/127.0.0.1:8000/api/comments/<comment_id>/` - Update a specific comment.
-    - DELETE ` http:/127.0.0.1:8000/api/comments/<comment_id>/` - Delete a specific comment.
-![Alt](screens/comments_to_id.png)
+    - `GET /api/comments/<comment_id>/` - Retrieve a specific comment.
+    - `PUT /api/comments/<comment_id>/` - Update a specific comment.
+    - `DELETE /api/comments/<comment_id>/` - Delete a specific comment.
   - **Description**: Retrieves, updates, or deletes the comment specified by `comment_id`.
+
+---
 
 Each endpoint requires authentication via a token provided by the `/token/` endpoint, which should be included in the header of your requests for accessing user-specific resources.
