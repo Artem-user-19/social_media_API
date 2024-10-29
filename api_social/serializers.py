@@ -1,11 +1,18 @@
 from rest_framework import serializers
-from .models import User, Post, Comment, Follow
+from .models import User, Post, Comment, Follow, Like
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password", "bio", "profile_picture"]
+        fields = [
+            "id",
+            "username",
+            "email",
+            "password",
+            "bio",
+            "profile_picture"
+        ]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
@@ -33,3 +40,15 @@ class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = ["follower", "followed", "created_at"]
+
+
+class UserFollowingListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "bio", "profile_picture"]
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = ["id", "post", "user"]

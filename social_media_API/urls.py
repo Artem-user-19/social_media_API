@@ -15,12 +15,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
+from api_social.views import UserViewSet, ObtainAuthTokenView
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('api_social.urls')),
-]
-
-
+    path("admin/", admin.site.urls),
+    path("api/", include("api_social.urls")),
+    path("register/", UserViewSet.as_view({"post": "create"}), name="register"),
+    path("token/", ObtainAuthTokenView.as_view(), name="obtain-auth-token"),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

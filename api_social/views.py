@@ -1,78 +1,165 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status, generics
 from rest_framework.response import Response
-from .models import User, Post, Comment, Follow
-from .serializers import UserSerializer, PostSerializer, CommentSerializer, FollowSerializer
-from rest_framework.decorators import action
+from django.contrib.auth import get_user_model
+from rest_framework.settings import api_settings
+
+from api_social.serializers import (
+    UserSerializer,
+    UserFollowingListSerializer,
+    PostSerializer,
+    CommentSerializer,
+    FollowSerializer,
+)
 from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
+from .models import Post, Follow, Comment, Like
+from rest_framework.authtoken.views import ObtainAuthToken
+
+
+User = get_user_model()
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
-
-    def create(self, request, *args, **kwargs):
-        user = self.get_serializer(data=request.data)
-        user.is_valid(raise_exception=True)
-        user.save()
-        Token.objects.create(user=user.instance)
-        return Response(user.data)
-
-    @action(detail=False, methods=['post'])
-    def login(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        user = User.objects.filter(username=username).first()
-        if user and user.check_password(password):
-            token, _ = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key})
-        return Response({'error': 'Invalid credentials'}, status=400)
-
-    @action(detail=False, methods=['post'])
-    def logout(self, request):
-        request.user.auth_token.delete()
-        return Response({'message': 'Logged out successfully'})
-
-
-class FollowViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
-    @action(detail=False, methods=['post'])
-    def follow(self, request):
-        followed_user_id = request.data.get('followed')
-        followed_user = User.objects.get(id=followed_user_id)
-        Follow.objects.create(follower=request.user, followed=followed_user)
-        return Response({'message': 'Followed successfully'})
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        Token.objects.create(user=user)
+        return Response(
+            {
+                "user": serializer.data,
+                "token": user.auth_token.key
+            }
+        )
 
-    @action(detail=False, methods=['post'])
-    def unfollow(self, request):
-        followed_user_id = request.data.get('followed')
-        Follow.objects.filter(follower=request.user, followed_id=followed_user_id).delete()
-        return Response({'message': 'Unfollowed successfully'})
 
-    @action(detail=False, methods=['get'])
-    def following(self, request):
-        followed_users = request.user.following.all()
-        return Response({'following': [followed.followed.username for followed in followed_users]})
+class UserFollowersView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        followers = user.followers.all()
+        serializer = UserFollowingListSerializer(followers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class FollowView(generics.GenericAPIView):
+    serializer_class = FollowSerializer
+
+    def post(self, request, *args, **kwargs):
+        user_to_follow_id = kwargs.get("user_id")
+        user_to_follow = User.objects.get(id=user_to_follow_id)
+
+        follow_instance, created = Follow.objects.get_or_create(
+            follower=request.user, followed=user_to_follow
+        )
+
+        if not created:
+            return Response(
+                {"detail": "You are already following this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(follow_instance)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, *args, **kwargs):
+        user_to_unfollow_id = kwargs.get("user_id")
+        user_to_unfollow = User.objects.get(id=user_to_unfollow_id)
+
+        follow_instance = Follow.objects.filter(
+            follower=request.user, followed=user_to_unfollow
+        ).first()
+
+        if not follow_instance:
+            return Response(
+                {"detail": "You are not following this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        follow_instance.delete()
+        return Response(
+            {
+                "detail": "Unfollowed successfully."
+            },
+            status=status.HTTP_204_NO_CONTENT
+        )
 
 
 class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        return Post.objects.filter(user__in=self.request.user.following.all())
-
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def list(self, request):
+        user = request.user
+        following_users = user.following.all()
+        posts = Post.objects.filter(
+            user__following__in=following_users
+        ).order_by(
+            "-created_at"
+        )
+        serializer = self.get_serializer(posts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        return Comment.objects.filter(post__user=self.request.user)
-
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class LikeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, post_id):
+        post = Post.objects.get(id=post_id)
+        like, created = Like.objects.get_or_create(
+            post=post,
+            user=request.user
+        )
+        if created:
+            return Response(
+                {
+                    "message": "Post liked"
+                },
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            {
+                "message": "Post already liked"
+            },
+            status=status.HTTP_200_OK
+        )
+
+    def delete(self, request, post_id):
+        post = Post.objects.get(id=post_id)
+        try:
+            like = Like.objects.get(post=post, user=request.user)
+            like.delete()
+            return Response(
+                {
+                    "message": "Post unliked"
+                },
+                status=status.HTTP_200_OK
+            )
+        except Like.DoesNotExist:
+            return Response(
+                {"message": "You have not liked this post"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class ObtainAuthTokenView(ObtainAuthToken):
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
