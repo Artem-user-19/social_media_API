@@ -6,6 +6,8 @@ from api_social.views import (
     PostViewSet,
     CommentViewSet,
     LikeView,
+    UnfollowUserView,
+    UnlikePostView
 )
 
 urlpatterns = [
@@ -16,7 +18,10 @@ urlpatterns = [
     ),
     path("followers/", UserFollowersView.as_view(), name="get_followers"),
     path("follow/<int:user_id>/", FollowView.as_view(), name="follow"),
-    path("unfollow/<int:user_id>/", FollowView.as_view(), name="unfollow"),
+    path("unfollow/<int:user_id>/",
+         UnfollowUserView.as_view(),
+         name="unfollow"
+         ),
     path(
         "posts/",
         PostViewSet.as_view(
@@ -33,7 +38,7 @@ urlpatterns = [
          ),
     path(
         "posts/<int:post_id>/unlike/",
-        LikeView.as_view(),
+        UnlikePostView.as_view(),
         name="unlike-post"
     ),
     path(
