@@ -27,8 +27,7 @@ A Django REST API for a social media platform that includes functionality for us
 
 1. **Clone the repository**:
     ```bash
-    git clone https://github.com/your-username/social-media-api.git
-    cd social-media-api
+    git clone https://github.com/your_username/social_media_API.git
     ```
 
 2. **Set up a virtual environment**:
